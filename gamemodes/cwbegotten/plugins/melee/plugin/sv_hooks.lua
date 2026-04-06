@@ -129,7 +129,7 @@ function cwMelee:DoMeleeHitEffects(entity, attacker, inflictor, position, origin
 				if (inflictor.AttackSoundTable) then
 					local attackSoundTable = GetSoundTable(inflictor.AttackSoundTable)
 					
-					if attacker:GetNetVar("ThrustStance") == true and !attackerWeapon.ChoppingAltAttack then
+					if attacker:GetNetVar("ThrustStance") == true and !attackerWeapon.ChoppingAltAttack and !attackerWeapon.PummelingAltAttack then
 						didthrust = true;
 					end;
 					
@@ -870,7 +870,7 @@ function cwMelee:EntityTakeDamageAfter(entity, damageInfo)
 							local maxPoleRange = (attacktable["meleerange"]) * 0.1
 							local maxIneffectiveRange = maxPoleRange * 0.65
 
-							if distance >= maxIneffectiveRange or (didthrust and attackerWeapon.CanSwipeAttack) then
+							if distance >= maxIneffectiveRange or (didthrust and attackerWeapon.CanSwipeAttack) or attacker:GetNetVar("Riposting") then
 								if !attacker:IsRunning() then
 									entity:SetNetVar("runningDisabled", true);
 									
@@ -893,7 +893,6 @@ function cwMelee:EntityTakeDamageAfter(entity, damageInfo)
 			if damage >= 5 and entity:IsPlayer() then
 				local targetVelocity = entity:GetVelocity();
 				if math.abs(targetVelocity.x) > 200 or math.abs(targetVelocity.y) > 200 then
-					damageInfo:ScaleDamage(1.3);
 					entity:TakeStability(damage * 0.75);
 				elseif entity:Crouching() then
 					damageInfo:ScaleDamage(1.2);

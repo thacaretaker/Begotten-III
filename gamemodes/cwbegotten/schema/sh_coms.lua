@@ -1336,11 +1336,33 @@ local zoneEventClasses = {
 	["caves"] = {"caves"},
 };
 
+if Clockwork.command.RegisterType then
+	local zone_tbl = {}
+
+	hook.Add("ClockworkSchemaLoaded", "ZoneCMDType", function ()
+		zone_tbl = table.Merge(zones:GetAll(), zones.supraZones)
+		hook.Remove("ClockworkSchemaLoaded", "ZoneCMDType")
+	end)
+
+	Clockwork.command:RegisterType("Zones", function (current_arg, _args)
+		local matches = {}
+
+		for zone, v in pairs(zone_tbl) do
+			if string.find(string.lower(zone), string.lower(current_arg)) then
+				table.insert(matches, zone)
+			end
+		end
+
+		return matches
+	end)
+end
+
 local COMMAND = Clockwork.command:New("EventZone");
 	COMMAND.tip = "Send an event to characters in a specific suprazone (suprawasteland will play for both wasteland and tower for example, or suprahell and supragore) or zone (i.e. wasteland, tower, caves, hell, gore).";
 	COMMAND.text = "<string Zone> <string Text>";
 	COMMAND.flags = CMD_DEFAULT;
 	COMMAND.access = "o";
+	COMMAND.types = {"Zones"}
 	COMMAND.arguments = 2;
 
 	-- Called when the command has been run.
@@ -1400,6 +1422,7 @@ local COMMAND = Clockwork.command:New("PlaySoundZone");
 	COMMAND.tip = "Play a sound to all players in a specific suprazone (suprawasteland will play for both wasteland and tower for example, or suprahell and supragore) or zone (i.e. wasteland, tower, caves, hell, gore).";
 	COMMAND.text = "<string Zone> <string SoundName> [int Level] [int Pitch]";
 	COMMAND.access = "o";
+	COMMAND.types = {"Zones"}
 	COMMAND.arguments = 2;
 	COMMAND.optionalArguments = 2;
 
@@ -1473,6 +1496,7 @@ local COMMAND = Clockwork.command:New("StopSoundZone");
 	COMMAND.tip = "Stop all sounds for all players in a specified zone.";
 	COMMAND.access = "s";
 	COMMAND.arguments = 1;
+	COMMAND.types = {"Zones"}
 
 	-- Called when the command has been run.
 	function COMMAND:OnRun(player, arguments)
@@ -2384,6 +2408,7 @@ local COMMAND = Clockwork.command:New("RemoveItemsRadius");
 	COMMAND.access = "s";
 	COMMAND.alias = {"ClearItemsRadius", "RemoveItemsInRadius"};
 	COMMAND.arguments = 1;
+	COMMAND.types = {"Radius"}
 	
 	-- Called when the command has been run.
 	function COMMAND:OnRun(player, arguments)
@@ -2693,7 +2718,8 @@ local COMMAND = Clockwork.command:New("RemoveNPCSpawn")
 	COMMAND.tip = "Remove an npc spawn location at your cursor."
 	COMMAND.access = "s"
 	COMMAND.optionalArguments = 1;
-	COMMAND.text = "[int Distance]"
+	COMMAND.text = "[int Radius]"
+	COMMAND.types = {"Radius"}
 
 	-- Called when the command has been run.
 	function COMMAND:OnRun(player, arguments)
@@ -3272,14 +3298,22 @@ local COMMAND = Clockwork.command:New("HellJaunt");
 						local chosenspot = math.random(1, #Schema.hellPortalTeleports["hell"]);
 						local destination = Schema.hellPortalTeleports["hell"][chosenspot].pos;
 						local angles = Schema.hellPortalTeleports["hell"][chosenspot].ang;
+						local jauntParticle = "teleport_fx_slow";
+						local jauntTime = 1.75;
 						
-						ParticleEffect("teleport_fx", origin, Angle(0,0,0), player);
+						if player:GetSubfaction() and player:GetSubfaction() == "Kinisger" then
+							jauntParticle = "teleport_fx";
+							jauntTime = 0.75;
+						end
+						
+						ParticleEffect(jauntParticle, origin, Angle(0,0,0), player);
 						sound.Play("misc/summon.wav", origin, 100, 100);
-						ParticleEffect("teleport_fx", destination, Angle(0,0,0));
+						ParticleEffect(jauntParticle, destination, Angle(0,0,0));
 						sound.Play("misc/summon.wav", destination, 100, 100);
 						player.teleporting = true;
+						hook.Run("RunModifyPlayerSpeed", player, player.cwInfoTable, true);
 						
-						timer.Create("summonplayer_"..tostring(player:EntIndex()), 0.75, 1, function()
+						timer.Create("summonplayer_"..tostring(player:EntIndex()), jauntTime, 1, function()
 							if IsValid(player) then
 								player.teleporting = false;
 								
@@ -3341,14 +3375,9 @@ local COMMAND = Clockwork.command:New("HellJaunt");
 						
 						Schema:EasyText(player, "red", "You begin to helljaunt away!");
 						
-						timer.Simple(1, function()
+						timer.Simple(jauntTime, function()
 							if IsValid(player) and player:Alive() then
-								--if player:GetSubfaction() == "Philimaxio" then
-									-- Philimaxio get their corruption doubled, but to double 50 would be lethal so I'm exempting helljaunt corruption.
-									--player:HandleNeed("corruption", 25);
-								--else
 									player:HandleNeed("corruption", 50);
-								--end
 							end
 						end);
 					else
@@ -4226,3 +4255,26 @@ local COMMAND = Clockwork.command:New("HellPortalGaze");
 	end;
 
 COMMAND:Register();
+
+local COMMAND = Clockwork.command:New("CharSetScale")
+	COMMAND.tip = "Set a character's model scale. Overrides built in scale modifiers."
+	COMMAND.arguments = 2
+	COMMAND.text = "<player Target> <float Scale>"
+	COMMAND.access = "s"
+
+	function COMMAND:OnRun(player, arguments)
+		local target = Clockwork.player:FindByID(arguments[1])
+
+		if (!IsValid(target)) then Schema:EasyText(player, "peru", string.format("No player by the name of '%s' was found!", arguments[1])) return end
+
+		local scale = tonumber(arguments[2])
+		local viewScale = ((scale * 36) - 1)
+
+		target:SetCharacterData("customScale", scale)
+
+		target:SetModelScale(scale, FrameTime())
+		target:SetViewOffset(Vector(0, 0, 64 + (viewScale / 4)))
+		target:SetViewOffsetDucked(Vector(0, 0, 28 + (viewScale / 8)))
+	end
+
+COMMAND:Register()

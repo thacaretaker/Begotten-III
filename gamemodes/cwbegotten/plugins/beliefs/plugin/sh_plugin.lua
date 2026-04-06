@@ -160,7 +160,7 @@ local COMMAND = Clockwork.command:New("CharAddExperienceRadius")
     COMMAND.arguments = 2;
     COMMAND.text = "<int Experience> <int Radius>";
     COMMAND.alias = {"AddFaithRadius", "GiveFaithRadius", "CharAddXPRadius", "AddXPRadius", "AddExperienceRadius", "PlyAddXPRadius", "PlyAddExperienceRadius"};
-
+	COMMAND.types = {"", "Radius"}
     -- Called when the command has been run.
     function COMMAND:OnRun(player, arguments)
 		local radius = tonumber(arguments[2]);
@@ -180,7 +180,7 @@ local COMMAND = Clockwork.command:New("CharAddExperienceRadius")
 		
 		local counter = 0;
 		
-        for k, v in pairs(ents.FindInSphere(player:GetPos(), radius)) do
+        for k, v in pairs(ents.FindInSphere(player:GetEyeTrace().HitPos, radius)) do
             if v:IsPlayer() and v:Alive() and !v.cwObserverMode then
                 v:HandleXP(xp);
 				
@@ -1234,7 +1234,7 @@ local COMMAND = Clockwork.command:New("Warcry");
 							end
 						end
 							
-						if (faction == "Wanderer" or vFaction == "Wanderer") and v:GetFaith() ~= faith then
+						if (faction == "Wanderer" or faction ~= vFaction) and v:GetFaith() ~= faith then
 							-- Kinisgers can twisted warcry if disguised as a Reaver.
 							if faith == "Faith of the Dark" then
 								if faction == vFaction then
@@ -1412,7 +1412,11 @@ local COMMAND = Clockwork.command:New("Warcry");
 							
 							for i, v in ipairs(player.deceitfulLastDamages) do
 								if v.damageTime >= (curTime - 2) then
-									healthToRestore = healthToRestore + (v.damage / 1.43);
+									if player.abyssalHowlActive then
+										healthToRestore = healthToRestore + (v.damage);
+									else
+										healthToRestore = healthToRestore + (v.damage / 1.43);
+									end
 								end
 							end
 							
@@ -1446,7 +1450,7 @@ local COMMAND = Clockwork.command:New("Warcry");
 				if player_has_daring_trout then
 					player.daringTroutActive = true;
 					
-					timer.Create("DaringTroutTimer_"..player:EntIndex(), 25.5, 1, function()
+					timer.Create("DaringTroutTimer_"..player:EntIndex(), 20.5, 1, function()
 						if IsValid(player) then
 							if player.daringTroutActive then
 								player.daringTroutActive = nil;
@@ -1463,7 +1467,7 @@ local COMMAND = Clockwork.command:New("Warcry");
 				
 					hook.Run("RunModifyPlayerSpeed", player, player.cwInfoTable, true);
 				
-					timer.Simple(20.5, function()
+					timer.Create("FearsomeWolfTimer_"..player:EntIndex(), 20.5, 1, function()
 						if IsValid(player) then
 							player.fearsomeSpeed = nil;
 							player.warCryVictims = nil;
@@ -1745,6 +1749,10 @@ function COMMAND:OnRun(player, arguments)
 				Schema:EasyText(player, "firebrick", "You cannot do this right now!");
 			
 				return false;
+			--[[elseif player.soulscorchActive then
+				Schema:EasyText(player, "firebrick", "You cannot commit suicide while 'Soulscorch' is active!");
+			
+				return false;]]--
 			end
 
 			player:CommitSuicide()

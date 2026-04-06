@@ -886,6 +886,10 @@ function Clockwork.kernel:DoEntityTakeDamageHook(entity, damageInfo)
 	if hook.Run("EntityTakeDamageAfter", entity, damageInfo) == true then
 		return true;
 	end
+
+	if (damageInfo:GetDamage() > 0 and IsValid(attacker) and attacker:IsPlayer()) then
+		attacker.lastDealtDamage = CurTime()
+	end
 	
 	if (player and (entity:IsPlayer() or isPlayerRagdoll)) then
 		if (!isPlayerRagdoll) then
@@ -951,6 +955,10 @@ function Clockwork.kernel:DoEntityTakeDamageHook(entity, damageInfo)
 		hook.Run("PreCalculatePlayerDamage", player, lastHitGroup, damageInfo);
 		hook.Run("CalculatePlayerDamage", player, lastHitGroup, damageInfo);
 		hook.Run("PostCalculatePlayerDamage", player, lastHitGroup, damageInfo);
+
+		if (damageInfo:GetDamage() > 0) then
+			player.lastReceivedDamage = CurTime()
+		end
 	end
 end
 
@@ -1684,11 +1692,10 @@ function playerMeta:GetMaxHealth(health)
 
 	if FACTION then
 		maxHealth = FACTION.maxHealth or 100;
-		maxArmor = FACTION.maxArmor or 100;
 	end
 	
 	if boost > 0 then
-		maxhealth = maxHealth + boost
+		maxHealth = maxHealth + boost
 	end	
 	
 	if factionName == "The Third Inquisition" then
@@ -1697,13 +1704,19 @@ function playerMeta:GetMaxHealth(health)
 	
 	if subfaction then
 		if subfaction == "Clan Grock" then
-			maxHealth = maxHealth + 175;
+			maxHealth = maxHealth + 100
+			
+			if cwBeliefs then
+				local hpToAdd = math.min(self:GetCharacterData("level", 1), cwBeliefs.sacramentLevelCap) * 2;
+				
+				maxHealth = maxHealth + hpToAdd;
+			end
 		elseif subfaction == "Knights of Sol" then
 			maxHealth = maxHealth + 75;
 		elseif subfaction == "Inquisition" or subfaction == "Philimaxio" then
 			maxHealth = maxHealth + 50;
 		elseif subfaction == "Clan Gore" then
-			maxHealth = maxHealth + 40;
+			maxHealth = maxHealth + 45;
 		elseif subfaction == "Clan Harald" then
 			maxHealth = maxHealth + 35;
 		elseif subfaction == "Clan Shagalax" or subfaction == "Machinists" or subfaction == "Watchman" or subfaction == "Low Ministry" then
@@ -1713,7 +1726,7 @@ function playerMeta:GetMaxHealth(health)
 		elseif subfaction == "Servus" then
 			maxHealth = maxHealth + 25
 		elseif subfaction == "Auxiliary" then
-			maxHealth = maxHealth + 20	
+			maxHealth = maxHealth + 20
 		end
 	end
 	

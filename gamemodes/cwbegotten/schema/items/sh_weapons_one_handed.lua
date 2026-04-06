@@ -68,19 +68,19 @@ ITEM:Register();
 
 local ITEM = Clockwork.item:New("weapon_base");
 	ITEM.name = "Iron Battle Axe";
-	ITEM.model = "models/demonssouls/weapons/battle axe.mdl";
+    ITEM.model = "models/weapons/ironaxe.mdl";
 	ITEM.weight = 1.5;
 	ITEM.uniqueID = "begotten_1h_battleaxe";
 	ITEM.category = "Melee";
 	ITEM.description = "A bulky black iron double-sided axe. A crude weapon for crude men.";
-	ITEM.iconoverride = "materials/begotten/ui/itemicons/battle_axe.png"
+	ITEM.iconoverride = "begotten/ui/itemicons/ironaxe.png"
 	ITEM.meleeWeapon = true;
-	ITEM.isAttachment = true;
-	ITEM.attachmentBone = "ValveBiped.Bip01_L_Thigh";
-	ITEM.attachmentOffsetAngles = Angle(20.88, 0, 180);
-	ITEM.attachmentOffsetVector = Vector(3.54, 1.41, 26.87);
-	ITEM.canUseOffhand = true;
-	ITEM.canUseShields = true;
+    ITEM.isAttachment = true;
+    ITEM.attachmentBone = "ValveBiped.Bip01_L_Thigh";
+    ITEM.attachmentOffsetAngles = Angle(276.17, 0, 180);
+    ITEM.attachmentOffsetVector = Vector(3.54, 1.41, 26.87);
+    ITEM.canUseOffhand = true;
+    ITEM.canUseShields = true;
 	
 	ITEM.attributes = {"splinter"};
 	ITEM.components = {breakdownType = "meltdown", items = {"iron_chunks"}};
@@ -956,7 +956,7 @@ local ITEM = Clockwork.item:New("weapon_base");
 	ITEM.canUseShields = true;
 	
 	ITEM.components = {breakdownType = "meltdown", items = {"iron_chunks", "iron_chunks", "wood"}}; -- use "breakdown" for other type
-	ITEM.attributes = {"flail"};
+	ITEM.attributes = {"flail", "punisher"};
 	ITEM.itemSpawnerInfo = {category = "Melee", rarity = 5000, bNoSupercrate = true};
 ITEM:Register();
 
@@ -979,7 +979,7 @@ local ITEM = Clockwork.item:New("weapon_base");
 	ITEM.itemSpawnerInfo = {category = "Melee", rarity = 800, supercrateOnly = true};
 	
 	ITEM.components = {breakdownType = "meltdown", items = {"steel_chunks", "steel_chunks", "steel_chunks", "wood"}}; -- use "breakdown" for other type
-	ITEM.attributes = {"flail"};
+	ITEM.attributes = {"flail", "punisher"};
 	ITEM.requiredbeliefs = {"repentant"};
 	ITEM.kinisgerOverride = true;
 ITEM:Register();

@@ -102,6 +102,29 @@ function cwMedicalSystem:StringToHitGroup(str)
 	end;
 end;
 
+-- A function to give infections based off of an item's infection chance
+function cwMedicalSystem:RollInfectionChance(itemTable, target, limbGroup, healer)
+	local infectionChance = itemTable.infectionChance;
+	
+	if !healer then
+		healer = target;
+	end
+	
+	if infectionChance then
+		if cwBeliefs and healer:HasBelief("sanitary") then
+			infectionChance = infectionChance / 2;
+		end
+				
+		if math.random(1, 100) <= infectionChance then
+			if itemTable.infectionChance > math.random(50, 100) then
+				target:AddInjury(limbGroup, "infection");
+			else
+				target:AddInjury(limbGroup, "minor_infection");
+			end
+		end
+	end
+end;
+
 -- Called when a player uses a medical item.
 function cwMedicalSystem:PlayerUseMedical(player, itemTable, hitGroup)
 	if (!IsValid(player) or !itemTable or !player:HasItemInstance(itemTable) or !player:Alive()) then
@@ -133,6 +156,7 @@ function cwMedicalSystem:PlayerUseMedical(player, itemTable, hitGroup)
 			if (itemTable("stopsBleeding") and player.bleeding) then
 				if itemTable.limbs and istable(itemTable.limbs) and #itemTable.limbs > 0 and hitGroup then
 					if player:GetCharacterData("BleedingLimbs", {})[self:HitgroupToString(hitGroup)] and table.HasValue(itemTable.limbs, hitGroup) then
+						self:RollInfectionChance(itemTable, player, self.cwHitGroupToString[hitGroup])
 						player:MakeLimbStopBleeding(hitGroup);
 						Clockwork.hint:Send(player, "Your "..self.cwHitGroupToString[hitGroup].." stops bleeding...", 5, Color(100, 175, 100), true, true);
 					end
@@ -159,23 +183,8 @@ function cwMedicalSystem:PlayerUseMedical(player, itemTable, hitGroup)
 						
 						for k, v in pairs(injuries) do							
 							if v[injury] then
-								local infectionChance = itemTable.infectionChance;
-								
+								self:RollInfectionChance(itemTable, player, k)								
 								player:RemoveInjury(k, injury);
-								
-								if infectionChance then
-									if cwBeliefs and player:HasBelief("sanitary") then
-										infectionChance = infectionChance / 2;
-									end
-									
-									if math.random(1, 100) <= infectionChance then
-										if itemTable.infectionChance > 40 then
-											player:AddInjury(k, "infection");
-										else
-											player:AddInjury(k, "minor_infection");
-										end
-									end
-								end
 							end
 						end
 					end
@@ -186,24 +195,9 @@ function cwMedicalSystem:PlayerUseMedical(player, itemTable, hitGroup)
 						
 						for k, v in pairs(injuries) do
 							if k == hitGroup and v[injury] then
-								local infectionChance = itemTable.infectionChance;
+								self:RollInfectionChance(itemTable, player, k)
 								
-								player:RemoveInjury(k, injury);
-								
-								if infectionChance then
-									if cwBeliefs and player:HasBelief("sanitary") then
-										infectionChance = infectionChance / 2;
-									end
-									
-									if math.random(1, 100) <= infectionChance then
-										if itemTable.infectionChance > 40 then
-											player:AddInjury(k, "infection");
-										else
-											player:AddInjury(k, "minor_infection");
-										end
-									end
-								end
-								
+								player:RemoveInjury(k, injury);								
 								break;
 							end
 						end
@@ -232,16 +226,20 @@ function cwMedicalSystem:PlayerUseMedical(player, itemTable, hitGroup)
 				local healRepetition = itemTable("healRepetition");
 				local timesHealed = 0;
 				
-				if cwBeliefs and player:HasBelief("medicine_man") then
-					healAmount = healAmount * 1.7;
-				end
-				
-				if cwBeliefs and player:HasBelief("one_with_the_druids") then
-					healAmount = healAmount * 1.5;
-				end
-				
-				if clothesItem and clothesItem.attributes and table.HasValue(clothesItem.attributes, "practitioner") then
-					healAmount = healAmount * 1.25;
+				if player:HasDisease("sepsis") then
+					healAmount = 0;
+				else
+					if cwBeliefs and player:HasBelief("medicine_man") then
+						healAmount = healAmount * 1.7;
+					end
+					
+					if cwBeliefs and player:HasBelief("one_with_the_druids") then
+						healAmount = healAmount * 1.5;
+					end
+					
+					if clothesItem and clothesItem.attributes and table.HasValue(clothesItem.attributes, "practitioner") then
+						healAmount = healAmount * 1.25;
+					end
 				end
 
 				timer.Create(playerIndex.."_heal_"..itemTable.itemID, healDelay, healRepetition, function()
@@ -377,31 +375,16 @@ function cwMedicalSystem:HealPlayer(player, target, itemTable, hitGroup)
 				if itemTable.curesInjuries then
 					local curesInjuries = table.Copy(itemTable.curesInjuries)
 					if(clothesItem and clothesItem.attributes and table.HasValue(clothesItem.attributes, "miracle_doctor") and itemTable.stopsBleeding and !table.HasValue(curesInjuries, "gash")) then table.insert(curesInjuries, "gash") end
-
+					
 					if hitGroup == "all" then
 						for i = 1, #curesInjuries do
 							local injury = curesInjuries[i];
 							local injuries = self:GetInjuries(target);
-
+							
 							for k, v in pairs(injuries) do							
 								if v[injury] then
-									local infectionChance = itemTable.infectionChance;
-
+									self:RollInfectionChance(itemTable, target, k, player)								
 									target:RemoveInjury(k, injury);
-
-									if infectionChance then
-										if cwBeliefs and (player:HasBelief("sanitary") or target:HasBelief("sanitary")) then
-											infectionChance = infectionChance / 2;
-										end
-
-										if math.random(1, 100) <= infectionChance then
-											if itemTable.infectionChance > 40 then
-												target:AddInjury(k, "infection");
-											else
-												target:AddInjury(k, "minor_infection");
-											end
-										end
-									end
 								end
 							end
 						end
@@ -412,24 +395,9 @@ function cwMedicalSystem:HealPlayer(player, target, itemTable, hitGroup)
 							
 							for k, v in pairs(injuries) do
 								if k == hitGroup and v[injury] then
-									local infectionChance = itemTable.infectionChance;
+									self:RollInfectionChance(itemTable, target, k, player)
 									
-									target:RemoveInjury(k, injury);
-									
-									if infectionChance then
-										if cwBeliefs and (player:HasBelief("sanitary") or target:HasBelief("sanitary")) then
-											infectionChance = infectionChance / 2;
-										end
-										
-										if math.random(1, 100) <= infectionChance then
-											if itemTable.infectionChance > 40 then
-												target:AddInjury(k, "infection");
-											else
-												target:AddInjury(k, "minor_infection");
-											end
-										end
-									end
-									
+									target:RemoveInjury(k, injury);								
 									break;
 								end
 							end
@@ -473,16 +441,20 @@ function cwMedicalSystem:HealPlayer(player, target, itemTable, hitGroup)
 					local healRepetition = itemTable("healRepetition");
 					local timesHealed = 0;
 					
-					if cwBeliefs and player:HasBelief("medicine_man") then
-						healAmount = healAmount * 3;
-					end
-					
-					if cwBeliefs and player:HasBelief("one_with_the_druids") then
-						healAmount = healAmount * 1.5;
-					end
+					if target:HasDisease("sepsis") then
+						healAmount = 0;
+					else
+						if cwBeliefs and player:HasBelief("medicine_man") then
+							healAmount = healAmount * 3;
+						end
+						
+						if cwBeliefs and player:HasBelief("one_with_the_druids") then
+							healAmount = healAmount * 1.5;
+						end
 
-					if clothesItem and clothesItem.attributes and table.HasValue(clothesItem.attributes, "practitioner") then
-						healAmount = healAmount * 1.25;
+						if clothesItem and clothesItem.attributes and table.HasValue(clothesItem.attributes, "practitioner") then
+							healAmount = healAmount * 1.25;
+						end
 					end
 					
 					timer.Create(targetIndex.."_heal_"..itemTable.itemID, healDelay, healRepetition, function()
@@ -911,8 +883,6 @@ function cwMedicalSystem:PlayerUseUnknownItemFunction(player, itemTable, itemFun
 					else
 						Schema:EasyText(player, "firebrick", "This character is too far away!");
 					end;
-				else
-					printp("Fucked!");
 				end;
 			end
 		else
@@ -1372,7 +1342,7 @@ function playerMeta:InfectOtherPlayer(otherPlayer, diseases, chance)
 end
 
 -- Function to give a disease.
-function playerMeta:GiveDisease(uniqueID, stage)
+function playerMeta:GiveDisease(uniqueID, stage, bBypassImmunity)
 	if cwBeliefs and self:HasBelief("the_paradox_riddle_equation") then
 		return false;
 	end
@@ -1393,6 +1363,12 @@ function playerMeta:GiveDisease(uniqueID, stage)
 		end
 		
 		if !has_disease then
+			local immunitiesTable = self:GetCharacterData("diseaseImmunities");
+			
+			if !bBypassImmunity and immunitiesTable and immunitiesTable[uniqueID] and immunitiesTable[uniqueID] >= self:CharPlayTime() then
+				return false;
+			end
+		
 			local diseaseData = {};
 			local diseaseSharedVar = self:GetNetVar("diseases", {});
 			
@@ -1421,7 +1397,7 @@ function playerMeta:GiveDisease(uniqueID, stage)
 	return false;
 end
 
-function playerMeta:TakeDisease(uniqueID)
+function playerMeta:TakeDisease(uniqueID, bMakeImmune)
 	local diseaseTable = cwMedicalSystem:FindDiseaseByID(uniqueID);
 	
 	if diseaseTable then
@@ -1443,6 +1419,14 @@ function playerMeta:TakeDisease(uniqueID)
 						table.remove(diseaseSharedVar, j);
 						break;
 					end
+				end
+				
+				if bMakeImmune then
+					local immunitiesTable = self:GetCharacterData("diseaseImmunities", {});
+				
+					immunitiesTable[uniqueID] = self:CharPlayTime() + 7200;
+					
+					self:SetCharacterData("diseaseImmunities", immunitiesTable);
 				end
 				
 				self:SetCharacterData("diseases", diseases);
@@ -1597,7 +1581,7 @@ function playerMeta:NetworkDiseases()
 	end
 end
 
-function playerMeta:Vomit(bVomitBlood)
+function playerMeta:Vomit(bVomitBlood, bFromFood)
 	local contagious_diseases = {};
 	
 	for i, disease in ipairs(self:GetCharacterData("diseases", {})) do
@@ -1617,14 +1601,24 @@ function playerMeta:Vomit(bVomitBlood)
 		local strings = {"suddenly throws up on the ground, hurling vomit everywhere!", "vomits onto the ground!", "gags and then vomits all over the ground!"};
 		
 		if cwCharacterNeeds and self.HandleNeed then
-			self:HandleNeed("hunger", 5);
-			self:HandleNeed("thirst", 5);
+			if bFromFood then
+				self:HandleNeed("hunger", math.random(20, 40));
+				self:HandleNeed("thirst", math.random(20, 40));
+			else
+				self:HandleNeed("hunger", math.random(5, 15));
+				self:HandleNeed("thirst", math.random(5, 15));
+			end
 		end
 		
 		local health = self:Health();
+		local healthToTake = 5;
 		
-		if health > 5 then
-			self:SetHealth(math.max(1, health - 5));
+		if bFromFood then
+			healthToTake = 15;
+		end
+		
+		if health > healthToTake then
+			self:SetHealth(math.max(1, health - healthToTake));
 			
 			Clockwork.kernel:PrintLog(LOGTYPE_MAJOR, self:Name().." has taken "..health - self:Health().." damage from vomiting, leaving them at "..self:Health().." health!");
 		else
@@ -1638,7 +1632,12 @@ function playerMeta:Vomit(bVomitBlood)
 			end);
 		end
 		
-		self:Freeze(true);
+		if self:IsFrozen() then
+			self.shouldUnfreeze = false;
+		else
+			self:Freeze(true);
+		end
+
 		self:EmitSound("misc/splat.ogg", 60, math.random(80, 95));
 		--ParticleEffect("vomit_barnacle", headPos + (self:GetForward() * 8) - Vector(0, 0, 1), Angle(90, 0, 0), self);
 		--ParticleEffect("vomit_barnacle_b", headPos + (self:GetForward() * 8) - Vector(0, 0, 1), Angle(90, 0, 0), self);
@@ -1647,7 +1646,11 @@ function playerMeta:Vomit(bVomitBlood)
 		
 		timer.Simple(3, function()
 			if IsValid(self) then
-				self:Freeze(false);
+				if self.shouldUnfreeze ~= false then
+					self:Freeze(false);
+				else
+					self.shouldUnfreeze = nil;
+				end
 				
 				if self:Alive() then
 					local curse_strings = {"Fuck...", "Cocksucker...", "Shit...", "Fuck's sake...", "Gah..."};

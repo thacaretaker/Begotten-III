@@ -14,6 +14,7 @@ Clockwork.flag:Add("c", "Spawn Chairs", "Access to spawn chairs.")
 Clockwork.flag:Add("e", "Spawn Props", "Access to spawn props.")
 Clockwork.flag:Add("p", "Physics Gun", "Access to the physics gun.")
 Clockwork.flag:Add("n", "Spawn NPCs", "Access to spawn NPCs.")
+Clockwork.flag:Add("m", "Spawn Menu", "Access to the spawn menu.")
 Clockwork.flag:Add("t", "Tool Gun", "Access to the tool gun.")
 Clockwork.flag:Add("j", "Bypass Char Limit", "Ability to bypass the 1 character limit for whitelisted factions as a non-admin.")
 Clockwork.flag:Add("P", "Proclaim", "Access to use /proclaim as a non-admin.")
@@ -30,6 +31,7 @@ Clockwork.flag:Add("M", "No Pain Sounds", "No pain or death sounds from your cha
 Clockwork.flag:Add("S", "Ignore Item Requirements", "Ignore all requirements (i.e. beliefs, factions) to equip an item.")
 Clockwork.flag:Add("l", "Unholy Blessing Always Active", "Unholy Blessing is always active on weapons that have the attribute.")
 Clockwork.flag:Add("-", "Drop Prevention", "Do not drop items on death. Keep items when perma-killed.")
+Clockwork.flag:Add("=", "Bypass Faction Limit", "Ability to bypass faction ratios as a non-admin.")
 
 local map = game.GetMap();
 
@@ -81,12 +83,12 @@ Clockwork.kernel:IncludePrefixed("cl_schema.lua");
 Clockwork.kernel:IncludePrefixed("cl_theme.lua");
 Clockwork.kernel:IncludePrefixed("cl_hooks.lua");
 Clockwork.kernel:IncludePrefixed("cl_vfx.lua");
-Clockwork.kernel:IncludePrefixed("sh_coms.lua");
 Clockwork.kernel:IncludePrefixed("sh_faiths.lua");
 Clockwork.kernel:IncludePrefixed("sh_zones.lua");
 Clockwork.kernel:IncludePrefixed("sv_schema.lua");
 Clockwork.kernel:IncludePrefixed("sv_hooks.lua");
 Clockwork.kernel:IncludePrefixed("sv_notes.lua");
+Clockwork.kernel:IncludePrefixed("sh_coms.lua");
 
 Clockwork.option:SetKey("default_date", {month = 666, year = 666, day = 666});
 Clockwork.option:SetKey("default_time", {minute = 0, hour = 0, day = 1});
@@ -250,6 +252,7 @@ local COMMAND = Clockwork.command:New("StartSoundRadius");
 	COMMAND.access = "s";
 	COMMAND.optionalArguments = 3;
 	COMMAND.text = "[int Radius] <string Sound> [int Volume] [int Pitch] [int DSP] [bool StopDynamicMusic]";
+	COMMAND.types = {"Radius"}
 
 	-- Called when the command has been run.
 	function COMMAND:OnRun(player, arguments)
@@ -319,6 +322,7 @@ local COMMAND = Clockwork.command:New("FadeSoundRadius");
 	COMMAND.arguments = 2;
 	COMMAND.access = "s";
 	COMMAND.text = "[int Radius] [int Duration]";
+	COMMAND.types = {"Radius"}
 
 	-- Called when the command has been run.
 	function COMMAND:OnRun(player, arguments)
@@ -385,6 +389,7 @@ local COMMAND = Clockwork.command:New("ChangeVolumeRadius");
 	COMMAND.arguments = 3;
 	COMMAND.access = "s";
 	COMMAND.text = "[int Radius] [int NewVolume] [int Duration]";
+	COMMAND.types = {"Radius"}
 
 	-- Called when the command has been run.
 	function COMMAND:OnRun(player, arguments)
@@ -452,6 +457,7 @@ local COMMAND = Clockwork.command:New("ChangePitchRadius");
 	COMMAND.arguments = 3;
 	COMMAND.access = "s";
 	COMMAND.text = "[int Radius] [int NewPitch] [int Duration]";
+	COMMAND.types = {"Radius"}
 
 	-- Called when the command has been run.
 	function COMMAND:OnRun(player, arguments)

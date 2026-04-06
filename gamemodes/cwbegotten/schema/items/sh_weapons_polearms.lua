@@ -66,19 +66,19 @@ ITEM:Register();
 
 local ITEM = Clockwork.item:New("weapon_base");
 	ITEM.name = "Halberd";
-	ITEM.model = "models/demonssouls/weapons/halberd.mdl";
+	ITEM.model = "models/weapons/halberd.mdl";
 	ITEM.weight = 6;
 	ITEM.uniqueID = "begotten_polearm_halberd";
 	ITEM.category = "Melee";
 	ITEM.description = "A long metal polearm. It has a steel chopping edge and a sharp metal spike for penetrating plate. A weapon typically found in the ranks of the lowly Gatekeepers, as it is capable of giving even a common fool a fighting chance against great horrors.";
-	ITEM.iconoverride = "materials/begotten/ui/itemicons/halberd.png"
+	ITEM.iconoverride = "materials/begotten/ui/itemicons/newhalberd.png"
 	ITEM.meleeWeapon = true;
 	ITEM.isAttachment = true;
 	ITEM.isPolearm = true;
 	ITEM.hasMinimumRange = true;
 	ITEM.attachmentBone = "ValveBiped.Bip01_Spine2";
-	ITEM.attachmentOffsetAngles = Angle(88.51, 0, 8.95);
-	ITEM.attachmentOffsetVector = Vector(0, 3, -17.68);
+	ITEM.attachmentOffsetVector = Vector(-4.16, 2.77, -25.42);
+	ITEM.attachmentOffsetAngles = Angle(0, 11.05, 0);
 	
 	ITEM.attributes = {"grounded"};
 	ITEM.components = {breakdownType = "meltdown", items = {"steel_chunks", "wood", "wood", "wood", "wood"}}; -- use "breakdown" for other type
@@ -152,22 +152,22 @@ ITEM:Register();
 
 local ITEM = Clockwork.item:New("weapon_base");
 	ITEM.name = "Glazic Banner";
-	ITEM.model = "models/begotten/misc/gatekeeper_banner.mdl";
+	ITEM.model = "models/begoyten/glazicbanner/glazicbanner.mdl";
 	ITEM.weight = 8.5;
 	ITEM.uniqueID = "begotten_polearm_glazicbanner";
 	ITEM.category = "Melee";
 	ITEM.description = "A flag bearing the insignia of the Holy Order of the Gatekeepers. It serves as an inspiration in battle, and to lose it would be extremely grave indeed.";
-	ITEM.iconoverride = "materials/begotten/ui/itemicons/gatekeeper_banner.png"
+	ITEM.iconoverride = "materials/begotten/ui/itemicons/newglazicbanner.png"
 	ITEM.meleeWeapon = true;
 	ITEM.isAttachment = true;
 	ITEM.isPolearm = true;
 	ITEM.hasMinimumRange = true;
 	ITEM.attachmentBone = "ValveBiped.Bip01_Spine2";
-	ITEM.attachmentOffsetAngles = Angle(114.36, 271.49, 152.15);
-	ITEM.attachmentOffsetVector = Vector(-2.83, 6, 53.75);
-	
+	ITEM.attachmentOffsetAngles = Angle(0, 0, 178);
+	ITEM.attachmentOffsetVector = Vector(0.71, 4.24, -3.54);	
+
 	ITEM.attributes = {"aoebuff"};
-	ITEM.components = {breakdownType = "meltdown", items = {"cloth", "cloth", "cloth", "cloth", "cloth", "iron_chunks", "iron_chunks"}};
+	ITEM.components = {breakdownType = "meltdown", items = {"leather", "leather", "leather", "leather", "steel_chunks", "steel_chunks"}};
 	ITEM.requiredFaiths = {"Faith of the Light"};
 	ITEM.kinisgerOverride = true;
 ITEM:Register();
@@ -189,7 +189,7 @@ local ITEM = Clockwork.item:New("weapon_base");
 	ITEM.attachmentOffsetVector = Vector(0, 6, -38.74);
 	
 	ITEM.attributes = {"aoebuff"};
-	ITEM.components = {breakdownType = "meltdown", items = {"cloth", "cloth", "cloth", "cloth", "cloth", "iron_chunks", "iron_chunks"}};
+	ITEM.components = {breakdownType = "meltdown", items = {"leather", "leather", "leather", "leather", "steel_chunks", "steel_chunks"}};
 	ITEM.requiredFaiths = {"Faith of the Light"};
 	ITEM.kinisgerOverride = true;
 ITEM:Register();

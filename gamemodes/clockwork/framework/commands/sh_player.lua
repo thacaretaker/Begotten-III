@@ -75,6 +75,7 @@ local COMMAND = Clockwork.command:New("PlaySound");
 	COMMAND.access = "o";
 	COMMAND.arguments = 2;
 	COMMAND.optionalArguments = 3;
+	COMMAND.types = {"Player"}
 
 	-- Called when the command has been run.
 	function COMMAND:OnRun(player, arguments)
@@ -582,7 +583,7 @@ local COMMAND = Clockwork.command:New("PlyRespawnStayAll");
 COMMAND:Register();
 
 local COMMAND = Clockwork.command:New("GetFlags");
-	COMMAND.tip = "Get the important flags (petcrnCW). You may specify the name of a player to give these flags to. Second argument makes flags persist across characters.";
+	COMMAND.tip = "Get the important flags (petcrnmCW). You may specify the name of a player to give these flags to. Second argument makes flags persist across characters.";
 	COMMAND.text = "<string Name> <bool PlayerFlags>";
 	COMMAND.access = "s";
 	COMMAND.optionalArguments = 2;
@@ -619,7 +620,7 @@ local COMMAND = Clockwork.command:New("GetFlags");
 			flagString = flagString..k;
 		end;]]--
 		
-		local flagString = "petcrnCW";
+		local flagString = "petcrnmCW";
 		
 		if (string.len(flagString) > 0) then
 			player:RunClockworkCmd(command, name, flagString);

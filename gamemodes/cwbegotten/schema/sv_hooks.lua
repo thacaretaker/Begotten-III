@@ -1111,7 +1111,7 @@ function Schema:ShowSpare1(player)
 	local target = player:GetEyeTraceNoCursor().Entity;
 	local entity = target;
 
-	if (IsValid(target) and target:GetShootPos():Distance(player:GetShootPos()) <= 32) then
+	if (IsValid(target) and target:GetShootPos():Distance(player:GetShootPos()) <= 46) then
 		target = Clockwork.entity:GetPlayer(target);
 		
 		if (target and player:GetNetVar("tied") == 0) then
@@ -1179,6 +1179,14 @@ function Schema:PlayerFootstep(player, position, foot, soundString, volume, reci
 			end
 			
 			return true;
+		elseif player:GetSubfaction() == "Clan Grock" then
+			if player:GetCharacterData("level", 1) >= 30 then
+				if player:IsRunning() then
+					util.ScreenShake(player:GetPos(), 1, 1, 0.5, 500)
+				else
+					util.ScreenShake(player:GetPos(), 0.5, 1, 0.5, 500)
+				end
+			end
 		end
 	else
 		local running = false;
@@ -1933,8 +1941,9 @@ function Schema:PlayerThink(player, curTime, infoTable, alive, initialized, plyT
 						if ((player:GetPos():WithinAABox(Vector(-4550, 5649, -509), Vector(-4722, 3972, -333))) or (player:GetPos():WithinAABox(Vector(-4621, 4045, -527), Vector(-3337, 3675, -450)))) and player:GetClothesEquipped() ~= "Plague Doctor Robes" and not player.cwObserverMode then
 							if math.random(1, 10) == 1 then
 								if !player:HasDisease("common_cold") then
-									player:GiveDisease("common_cold");
-									Clockwork.player:NotifyAdmins("operator", ""..player:Name().." has contracted the common cold from the corpse field!");
+									if player:GiveDisease("common_cold") then
+										Clockwork.player:NotifyAdmins("operator", ""..player:Name().." has contracted the common cold from the corpse field!");
+									end
 								end
 							end
 						end
@@ -2800,6 +2809,9 @@ end
 
 -- Called when a player dies.
 function Schema:PlayerDeath(player, inflictor, attacker, damageInfo)
+	player.lastDealtDamage = 0
+	player.lastReceivedDamage = 0
+	
 	if IsValid(attacker) and attacker:IsPlayer() and attacker:Alive() and not attacker.opponent then
 		local weapon = attacker:GetActiveWeapon();
 		
@@ -3009,13 +3021,31 @@ function Schema:PlayerCharacterLoaded(player)
 	local subfaction = player:GetCharacterData("kinisgerOverrideSubfaction") or player:GetSubfaction();
 	
 	if subfaction == "Clan Grock" then
-		player:SetModelScale(1.12, FrameTime());
-		player:SetViewOffset(Vector(0, 0, 72))
-		player:SetViewOffsetDucked(Vector(0, 0, 32))
+		local levelCap = 40;
+		
+		--[[if cwBeliefs then
+			levelCap = cwBeliefs.sacramentLevelCap;
+		end]]--
+		
+		local scale = math.min(player:GetCharacterData("level", 1), levelCap);
+	
+		player:SetModelScale(1 + (scale * 0.005), FrameTime());
+		player:SetViewOffset(Vector(0, 0, 64 + scale / 4));
+		player:SetViewOffsetDucked(Vector(0, 0, 28 + (scale / 8)));
 	else
 		player:SetModelScale(1, FrameTime());
 		player:SetViewOffset(Vector(0, 0, 64));
 		player:SetViewOffsetDucked(Vector(0, 0, 28));
+	end
+
+	local scale = player:GetCharacterData("customScale", 0)
+
+	if (scale > 0) then
+		local viewScale = ((scale * 36) - 1)
+
+		player:SetModelScale(scale, FrameTime())
+		player:SetViewOffset(Vector(0, 0, 64 + (viewScale / 4)))
+		player:SetViewOffsetDucked(Vector(0, 0, 28 + (viewScale / 8)))
 	end
 	
 	player:OverrideName(nil)
@@ -3087,6 +3117,9 @@ function Schema:PlayerCharacterLoaded(player)
 	end
 	
 	player.bWasInAir = nil;
+
+	player.lastDealtDamage = 0
+	player.lastReceivedDamage = 0
 end;
 
 -- Called when a player throws a punch.
@@ -3497,14 +3530,19 @@ function Schema:EntityTakeDamageNew(entity, damageInfo)
 		end
 		
 		if attacker.banners then
-			for k, v in pairs(attacker.banners) do
-				if v == "glazic" then
-					local faction = attacker:GetFaction();
-					
-					if faction == "Gatekeeper" or faction == "Holy Hierarchy" or faction == "Hillkeeper" or faction == "Pope Adyssa's Gatekeepers" then
-						damageInfo:ScaleDamage(1.15);
+			local attackerWeapon = attacker:GetActiveWeapon();
+			if IsValid(attackerWeapon) then
+				for k, v in pairs(attacker.banners) do
+					if v == "glazic" then
+						local faction = attacker:GetFaction();
+						
+						if faction == "Gatekeeper" or faction == "Holy Hierarchy" or faction == "Hillkeeper" or faction == "Pope Adyssa's Gatekeepers" then
+							if attackerWeapon.Base ~= "begotten_firearm_base" or (attackerWeapon.isMeleeFirearm and player:GetNetVar("ThrustStance")) or attackerWeapon.notPowder then
+								damageInfo:ScaleDamage(1.15);
 
-						break;
+								break;
+							end
+						end
 					end
 				end
 			end
@@ -3582,7 +3620,7 @@ function Schema:ModifyPlayerSpeed(player, infoTable, action)
 	if (Clockwork.player:HasFlags(player, "E")) then
 		infoTable.runSpeed = infoTable.walkSpeed * 3;
 		infoTable.jumpPower = infoTable.jumpPower * 3;
-	elseif action == "reloading" or action == "building" or action == "skinning" or action == "mutilating" or action == "putting_on_armor" or action == "taking_off_armor" then
+	elseif action == "reloading" or action == "building" or action == "skinning" or action == "mutilating" or action == "putting_on_armor" or action == "taking_off_armor" or player.teleporting == true then
 		infoTable.runSpeed = infoTable.walkSpeed * 0.1;
 		infoTable.walkSpeed = infoTable.walkSpeed * 0.1;
 	end
